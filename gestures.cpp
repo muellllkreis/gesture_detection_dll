@@ -53,10 +53,10 @@ struct Position
     int X, Y;
 };
 
-// opens VideoCapture feed (call only once in Awake()!) TODO: pass cam parameter from unity (cap.open(camNumber) instead of hardcoded)
-extern "C" int __declspec(dllexport) __stdcall openCam(int& outCameraWidth, int& outCameraHeight)
+// opens VideoCapture feed (call only once in Awake()!)
+extern "C" int __declspec(dllexport) __stdcall openCam(int& outCameraWidth, int& outCameraHeight, int camNumber)
 {
-    cap.open(1);
+    cap.open(camNumber);
     if (!cap.isOpened()) {
         return -1;
     }
