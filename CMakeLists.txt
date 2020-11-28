@@ -1,0 +1,13 @@
+CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
+
+set(CMAKE_BUILD_TYPE Release)
+SET(OpenCV_STATIC OFF)
+FIND_PACKAGE(OpenCV REQUIRED)
+
+PROJECT(GESTURE_TRACKER)
+
+# ADD_EXECUTABLE(sample sample.cpp)
+
+INCLUDE_DIRECTORIES(${OpenCV_INCLUDE_DIRS})
+ADD_EXECUTABLE(gestures gesture_detector.cpp binary_mask_creator.cpp gestures.cpp hand_roi.cpp)
+TARGET_LINK_LIBRARIES(gestures ${OpenCV_LIBS})
