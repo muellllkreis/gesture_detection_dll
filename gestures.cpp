@@ -22,13 +22,27 @@
 using namespace cv;
 using namespace std;
 
+// global variables
+Mat I1, I_BGR, I_HSV, binary_mask, mask_nf;
+
+// - feed related
 VideoCapture cap;
 vector<Hand_ROI> overlay(4, Hand_ROI());
+
+// - mask related
 vector<float> range(4, 0.f);
-Mat I1, I_BGR, I_HSV, binary_mask, mask_nf;
 binary_mask_creator BMC;
+
+// - gesture detection
 gesture_detector GD;
 Point handCenter;
+vector<Point> handContour;
+vector<Point> hull;
+vector<int> hull_int;
+vector<Vec4i> defects;
+Rect boundingRectangle;
+vector<Point> fingerTips;
+
 
 CascadeClassifier faceCascadeClassifier, profileCascadeClassifier;
 
@@ -156,10 +170,11 @@ extern "C" void __declspec(dllexport) __stdcall drawHandContour() {
     frame.convertTo(I_BGR, CV_32F, 1.0 / 255.0, 0.);
     cvtColor(I_BGR, I_HSV, COLOR_BGR2HSV);
 
-    vector<Point> handContour;
     GD.getHandContour(mask_nf, handContour);
     if (!handContour.empty()) {
-        handCenter = GD.drawHull(handContour, I_BGR);
+        handCenter = GD.drawHull(handContour, I_BGR, hull, hull_int, defects, boundingRectangle);
+        fingerTips = GD.findFingerTips(handContour, I_BGR, defects, boundingRectangle);
+        GD.drawFingerTips(fingerTips, I_BGR);
     }
     else {
         handCenter = Point(0, 0);
@@ -171,6 +186,15 @@ extern "C" void __declspec(dllexport) __stdcall drawHandContour() {
 extern "C" void __declspec(dllexport) __stdcall getHandCenter(Position& handPos) {
     handPos = Position(handCenter.x, handCenter.y);
 }
+
+extern "C" void __declspec(dllexport) __stdcall getFingerTips(Position* allFingerTips, int& detectedFingerTipsCount) {
+    for (size_t i = 0; i < fingerTips.size(); i++) {
+        allFingerTips[i] = Position(fingerTips[i].x, fingerTips[i].y);
+        detectedFingerTipsCount++;
+    }
+}
+
+
 
 // main has to be commented out for .dll creation. can be used for testing with a console application, though.
 

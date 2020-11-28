@@ -53,17 +53,15 @@ bool gesture_detector::getHandContour(Mat& binary_blur_uc, vector<Point>& handCo
 }
 
 // drawHull displays the detected hull on I_BGR and also returns its center as a Point
-Point gesture_detector::drawHull(vector<Point> handContour, Mat I_BGR) {
-    vector<Point> hull;
+// we also save the hull and all related features per reference (hull, hull_int, defects, boundingRect)
+Point gesture_detector::drawHull(vector<Point> handContour, Mat I_BGR, vector<Point>& hull, vector<int>& hull_int, vector<Vec4i>& defects, Rect& boundingRectangle) {
     convexHull(handContour, hull, true);
-    vector<int> hull_int;
     convexHull(handContour, hull_int, false);
-    vector<Vec4i> defects;
     convexityDefects(handContour, hull_int, defects);
 
     // draw contour and hull
     drawContours(I_BGR, vector<vector<Point>>(1, hull), -1, Scalar(0, 255, 0), 1);
-    Rect boundingRectangle = boundingRect(Mat(hull));
+    boundingRectangle = boundingRect(Mat(hull));
 
     // take the center of the rectangle which is approximately the center of the hand (tl = top left etc)
     Point boundingRectangleCenter((boundingRectangle.tl().x + boundingRectangle.br().x) / 2, (boundingRectangle.tl().y + boundingRectangle.br().y) / 2);
@@ -71,20 +69,11 @@ Point gesture_detector::drawHull(vector<Point> handContour, Mat I_BGR) {
     return boundingRectangleCenter;
 }
 
-vector<Point> gesture_detector::findFingerTips(vector<Point> handContour, Mat& I_BGR)
+vector<Point> gesture_detector::findFingerTips(vector<Point> handContour, Mat& I_BGR, vector<Vec4i> defects, Rect boundingRectangle)
 {    
-    std::cout << "hand found" << handContour.size()<< std::endl;
-    vector<Point> hull;
-    convexHull(handContour, hull, true);
-    vector<int> hull_int;
-    convexHull(handContour, hull_int, false);
-    vector<Vec4i> defects;
-    convexityDefects(handContour, hull_int, defects);    
-
-    // draw contour and hull
-    drawContours(I_BGR, vector<vector<Point>>(1, hull), -1, Scalar(0, 255, 0), 1);    
-    Rect boundingRectangle = boundingRect(Mat(hull));
-
+    if (defects.empty()) {
+        return vector<Point>();
+    }
     // take the center of the rectangle which is approximately the center of the hand (tl = top left etc)
     Point boundingRectangleCenter((boundingRectangle.tl().x + boundingRectangle.br().x) / 2, (boundingRectangle.tl().y + boundingRectangle.br().y) / 2);
     circle(I_BGR, boundingRectangleCenter, 5, Scalar(255, 0, 0), 4);
@@ -123,6 +112,17 @@ vector<Point> gesture_detector::findFingerTips(vector<Point> handContour, Mat& I
     //return filterFalsePositiveFingertips(fingerPoints, minDistance);
 
     return fingerPoints;
+}
+
+void gesture_detector::drawFingerTips(vector<Point> fingerTips, Mat& I) {
+    if (!fingerTips.empty()) {
+        Point p;
+        int k = 0;
+        for (int i = 0; i < fingerTips.size(); i++) {
+            p = fingerTips[i];
+            circle(I, p, 5, Scalar(100, 255, 100), 4);
+        }
+    }
 }
 
 //TEST RESULTS
