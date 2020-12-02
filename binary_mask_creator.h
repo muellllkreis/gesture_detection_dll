@@ -26,6 +26,13 @@ class binary_mask_creator
         std::vector<Hand_ROI> createMaskOverlay(Mat I_BGR, Mat I_HSV);
         Mat removeFacesFromMask(Mat frame, Mat binary_blur_uc, CascadeClassifier faceCascadeClassifier, CascadeClassifier profileCascadeClassifier);
         std::vector<float> computeAverageHSV(std::vector<Hand_ROI> roi);
+        Mat removeBackGround(Mat input);
+        void calibrateBackground(Mat frame);
+    private:
+        float backGroundThresholdOffset = 12;
+        bool calibrated = false;
+        Mat backgroundReference;
+
 };
 
 #endif

@@ -98,3 +98,45 @@ vector<Hand_ROI> binary_mask_creator::createMaskOverlay(Mat I_BGR, Mat I_HSV) {
 
 	return roi;
 }
+
+Mat binary_mask_creator::removeBackGround(Mat input)
+{
+	//get foreground
+	Mat foregroundMask;
+	if (!calibrated)
+	{
+		return input;
+	}
+	else
+	{
+		//remove background
+		cvtColor(input, foregroundMask, CV_BGR2GRAY);
+		for (int i = 0; i < foregroundMask.rows; i++)
+		{
+			for (int j = 0; j < foregroundMask.cols; j++)
+			{
+				uchar framePixel = foregroundMask.at<uchar>(i, j);
+				uchar backgroundPixel = backgroundReference.at<uchar>(i, j);
+				if (framePixel >= backgroundPixel - backGroundThresholdOffset && framePixel <= backgroundPixel + backGroundThresholdOffset)
+				{
+					foregroundMask.at<uchar>(i, j) = 0;
+				}
+				else
+				{
+					foregroundMask.at<uchar>(i, j) = 255;
+				}
+			}
+		}
+		//return foreground mask
+		Mat foreground;
+		input.copyTo(foreground, foregroundMask);
+		return foreground;
+	}
+}
+
+void binary_mask_creator::calibrateBackground(Mat inputFrame)
+{
+	//calibrate background for future background removal
+	cvtColor(inputFrame, backgroundReference, CV_BGR2GRAY);
+	calibrated = true;
+}

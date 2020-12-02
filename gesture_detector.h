@@ -37,6 +37,9 @@ class gesture_detector
         double findPointsDistanceOnX(Point a, Point b);        
         float distance(Point a, Point b);
         float getAngle(Point s, Point f, Point e);
+        float neighboorhoudSize = 0.02f; //for cleaning the fingertips point to one fingertip point in a given area
+        float limitDistanceRatio = 0.2f; //we keep only points with a distance superior to limitDistanceRatio*(hand_height) from the center of the hand to be fingers
+        float limitFingertipDistanceRatio = 0.15f; //we keep only points with a distance superior to limitDistanceRatio*(hand_height) from the center of the hand to be fingers
 };
 
 #endif
