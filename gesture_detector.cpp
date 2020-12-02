@@ -79,7 +79,7 @@ vector<Point> gesture_detector::findFingerTips(vector<Point> handContour, Mat& I
     Point boundingRectangleCenter((boundingRectangle.tl().x + boundingRectangle.br().x) / 2, (boundingRectangle.tl().y + boundingRectangle.br().y) / 2);
     circle(I_BGR, boundingRectangleCenter, 5, Scalar(255, 0, 0), 4);
 
-    //points corresponding to bigger and smaller distances
+    //points corresponding to bigger and smaller distances    
     vector<Point> startPoints;
     vector<Point> farPoints;
 
@@ -92,12 +92,12 @@ vector<Point> gesture_detector::findFingerTips(vector<Point> handContour, Mat& I
             farPoints.push_back(handContour[defects[i].val[2]]);
     }
 
-    //we want only one point in a given neighbourhood of points --> filter the points
+    //we want only one point in a given neighbourhood of points --> filter the points    
     vector<Point> filteredStartPoints = neighborhoodAverage(startPoints, boundingRectangle.height * neighboorhoudSize);
     vector<Point> filteredFarPoints = neighborhoodAverage(farPoints, boundingRectangle.height * neighboorhoudSize);
 
-
-    vector<Point> fingerPoints;
+    
+    vector<Point> fingerPoints{};
     //test if the remaining filtered points are actually fingertips
     for(int i = 0; i < filteredStartPoints.size(); i++)
     {
@@ -106,13 +106,13 @@ vector<Point> gesture_detector::findFingerTips(vector<Point> handContour, Mat& I
         {
             fingerPoints.push_back(filteredStartPoints[i]);
         }
-    }
+    }    
 
     //refining the points obtained
     vector<Point> filteredFingerPoints = neighborhoodAverage(fingerPoints, boundingRectangle.height * neighboorhoudSize * 5);
-
     float minDistance = limitFingertipDistanceRatio * boundingRectangle.height;
-    return filterFalsePositiveFingertips(filteredFingerPoints, minDistance);    
+    filterFalsePositiveFingertips(filteredFingerPoints, minDistance);    
+    return filteredFingerPoints;    
 }
 
 void gesture_detector::drawFingerTips(vector<Point> fingerTips, Mat& I) {
@@ -127,19 +127,17 @@ void gesture_detector::drawFingerTips(vector<Point> fingerTips, Mat& I) {
 }
 
 //TEST RESULTS
-vector<Point> gesture_detector::filterFalsePositiveFingertips(vector<Point> fingerPoints, float limitDistance)
+void gesture_detector::filterFalsePositiveFingertips(vector<Point>& fingerPoints, float limitDistance)
 {
-    vector<Point> filteredFingerPoints = fingerPoints;
-    if (filteredFingerPoints.size() > 0)
+    //vector<Point> filteredFingerPoints = fingerPoints;
+    if (fingerPoints.size() > 0)
     {
-        //filter out points too close to each other
-        //int lastIndex = ;
-        for (int i = 0; i < filteredFingerPoints.size() - 1; i++)
+        //filter out points too close to each other        
+        for (int i = 0; i < fingerPoints.size() - 1; i++)
         {
-            if (distance(filteredFingerPoints[i], filteredFingerPoints[i + 1]) < limitDistance)
+            if (distance(fingerPoints[i], fingerPoints[i + 1]) < limitDistance)
             {
-                filteredFingerPoints.erase(filteredFingerPoints.begin() + i + 1);
-                //lastIndex--;
+                fingerPoints.erase(fingerPoints.begin() + i + 1);                
             }
         }
 
@@ -160,8 +158,6 @@ vector<Point> gesture_detector::filterFalsePositiveFingertips(vector<Point> fing
         //    filteredFingerPoints.push_back(fingerPoints[fingerPoints.size() - 1]);
         //}
     }
-
-    return filteredFingerPoints;
 }
 
 
@@ -193,7 +189,11 @@ bool gesture_detector::isFinger(Point a, Point b, Point c, double minAngle, doub
 //GEOMETRY METHODS
 vector<Point> gesture_detector::neighborhoodAverage(vector<Point> initialPoints, float neighborhoodRadius)
 {
-    vector<Point> averagePoints;
+    vector<Point> averagePoints{};
+
+    if (initialPoints.empty()) {
+        return vector<Point>();
+    }
 
     // we start with the first point
     Point reference = initialPoints[0];

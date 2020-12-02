@@ -25,7 +25,7 @@ class gesture_detector
         gesture_detector();
         bool getHandContour(Mat& I, vector<Point>& handContour);
         vector<Point> findFingerTips(vector<Point> handContour, Mat& I, vector<Vec4i> defects, Rect boundingRectangle);
-        vector<Point> filterFalsePositiveFingertips(vector<Point> fingertips, float limitDistance);  
+        void filterFalsePositiveFingertips(vector<Point>& fingertips, float limitDistance);  
         Point drawHull(vector<Point> handContour, Mat I_BGR, vector<Point>& hull, vector<int>& hull_int, vector<Vec4i>& defects, Rect& boundingRectangle);
         void drawFingerTips(vector<Point> fingerTips, Mat& I);
     private :

@@ -173,7 +173,7 @@ extern "C" void __declspec(dllexport) __stdcall drawHandContour() {
     GD.getHandContour(mask_nf, handContour);
     if (!handContour.empty()) {
         handCenter = GD.drawHull(handContour, I_BGR, hull, hull_int, defects, boundingRectangle);
-        fingerTips = GD.findFingerTips(handContour, I_BGR, defects, boundingRectangle);
+        fingerTips = GD.findFingerTips(handContour, I_BGR, defects, boundingRectangle);        
         GD.drawFingerTips(fingerTips, I_BGR);
     }
     else {
@@ -187,7 +187,7 @@ extern "C" void __declspec(dllexport) __stdcall getHandCenter(Position& handPos)
     handPos = Position(handCenter.x, handCenter.y);
 }
 
-extern "C" void __declspec(dllexport) __stdcall getFingerTips(Position* allFingerTips, int& detectedFingerTipsCount) {
+extern "C" void __declspec(dllexport) __stdcall getFingerTips(Position* allFingerTips, int& detectedFingerTipsCount) {    
     for (size_t i = 0; i < fingerTips.size(); i++) {
         allFingerTips[i] = Position(fingerTips[i].x, fingerTips[i].y);
         detectedFingerTipsCount++;
