@@ -36,6 +36,7 @@ binary_mask_creator BMC;
 // - gesture detection
 gesture_detector GD;
 Point handCenter;
+Point furthestFingertip;
 vector<Point> handContour;
 vector<Point> hull;
 vector<int> hull_int;
@@ -76,6 +77,7 @@ extern "C" int __declspec(dllexport) __stdcall openCam(int& outCameraWidth, int&
     }
 
     handCenter = Point(0, 0);
+    furthestFingertip = Point(0, 0);
 
     // Unity (xmls have to be in root of working dir):
     String faceClassifierFileName = "haarcascade_frontalface_alt.xml";
@@ -182,6 +184,35 @@ extern "C" void __declspec(dllexport) __stdcall drawHandContour() {
     imshow("feed", I_BGR);
 }
 
+extern "C" void __declspec(dllexport) __stdcall drawIndex() {
+    Mat frame;
+    cap >> frame;
+
+    if (frame.empty()) {
+        handCenter = Point(0, 0);
+        furthestFingertip = Point(0, 0);
+    }
+
+    I1 = frame;
+
+    // create bgr and hsv version of image
+    frame.convertTo(I_BGR, CV_32F, 1.0 / 255.0, 0.);
+    cvtColor(I_BGR, I_HSV, COLOR_BGR2HSV);
+    
+    GD.getHandContour(mask_nf, handContour);
+    if (!handContour.empty()) {
+        handCenter = GD.drawHull(handContour, I_BGR, hull, hull_int, defects, boundingRectangle);        
+        furthestFingertip = GD.getFurthestFingertip(handContour, I_BGR, defects, boundingRectangle);        
+        vector<Point> furthestFinger{ furthestFingertip };        
+        GD.drawFingerTips(furthestFinger, I_BGR);        
+    }
+    else {
+        handCenter = Point(0, 0);
+        furthestFingertip = Point(0, 0);
+    }
+    imshow("feed", I_BGR);
+}
+
 // returns the current center of the identified hand's bounding box. can be called periodically when drawHandContour() is also called periodically (drawHandContour updates the handCenter)
 extern "C" void __declspec(dllexport) __stdcall getHandCenter(Position& handPos) {
     handPos = Position(handCenter.x, handCenter.y);
@@ -192,6 +223,10 @@ extern "C" void __declspec(dllexport) __stdcall getFingerTips(Position* allFinge
         allFingerTips[i] = Position(fingerTips[i].x, fingerTips[i].y);
         detectedFingerTipsCount++;
     }
+}
+
+extern "C" void __declspec(dllexport) __stdcall getFurthestFingertip(Position& fingerPos) {
+    fingerPos = Position(furthestFingertip.x, furthestFingertip.y);
 }
 
 

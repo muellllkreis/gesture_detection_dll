@@ -111,8 +111,44 @@ vector<Point> gesture_detector::findFingerTips(vector<Point> handContour, Mat& I
     //refining the points obtained
     vector<Point> filteredFingerPoints = neighborhoodAverage(fingerPoints, boundingRectangle.height * neighboorhoudSize * 5);
     float minDistance = limitFingertipDistanceRatio * boundingRectangle.height;
-    filterFalsePositiveFingertips(filteredFingerPoints, minDistance);    
+    filterFalsePositiveFingertips(filteredFingerPoints, minDistance);  
+
     return filteredFingerPoints;    
+}
+
+
+Point gesture_detector::getFurthestFingertip(vector<Point> handContour, Mat& I_BGR, vector<Vec4i> defects, Rect boundingRectangle)
+{
+    if (defects.empty()) {
+        return Point(0,0);
+    }
+    // take the center of the rectangle which is approximately the center of the hand (tl = top left etc)
+    Point boundingRectangleCenter((boundingRectangle.tl().x + boundingRectangle.br().x) / 2, (boundingRectangle.tl().y + boundingRectangle.br().y) / 2);
+    circle(I_BGR, boundingRectangleCenter, 5, Scalar(255, 0, 0), 4);
+
+    vector<Point> fingerTips = findFingerTips(handContour, I_BGR, defects, boundingRectangle);
+
+    if (fingerTips.size() > 0)
+    {
+        Point furthestPoint = fingerTips[0];
+        float maxFingerDistance = 0;
+
+        //compute furthest fingertip 
+        for (int i = 0; i < fingerTips.size(); i++)
+        {
+            float fingerDistance = distance(fingerTips[i], boundingRectangleCenter);
+            if (fingerDistance > maxFingerDistance)
+            {
+                maxFingerDistance = fingerDistance;
+                furthestPoint = fingerTips[i];
+            }
+        }
+        return furthestPoint;
+    }
+    else
+    {
+        return Point(0, 0);
+    }
 }
 
 void gesture_detector::drawFingerTips(vector<Point> fingerTips, Mat& I) {
@@ -130,14 +166,17 @@ void gesture_detector::drawFingerTips(vector<Point> fingerTips, Mat& I) {
 void gesture_detector::filterFalsePositiveFingertips(vector<Point>& fingerPoints, float limitDistance)
 {
     //vector<Point> filteredFingerPoints = fingerPoints;
-    if (fingerPoints.size() > 0)
+    if (fingerPoints.size() > 1)
     {
         //filter out points too close to each other        
-        for (int i = 0; i < fingerPoints.size() - 1; i++)
+        for (int i = 0; i < fingerPoints.size(); i++)
         {
-            if (distance(fingerPoints[i], fingerPoints[i + 1]) < limitDistance)
+            for (int j = 0; j < fingerPoints.size(); j++)
             {
-                fingerPoints.erase(fingerPoints.begin() + i + 1);                
+                if (i != j && distance(fingerPoints[i], fingerPoints[j]) < limitDistance)
+                {
+                    fingerPoints.erase(fingerPoints.begin() + j);                
+                }
             }
         }
 

@@ -28,9 +28,10 @@ class gesture_detector
         void filterFalsePositiveFingertips(vector<Point>& fingertips, float limitDistance);  
         Point drawHull(vector<Point> handContour, Mat I_BGR, vector<Point>& hull, vector<int>& hull_int, vector<Vec4i>& defects, Rect& boundingRectangle);
         void drawFingerTips(vector<Point> fingerTips, Mat& I);
+        Point getFurthestFingertip(vector<Point> handContour, Mat& I_BGR, vector<Vec4i> defects, Rect boundingRectangle);
     private :
         vector<Point> neighborhoodAverage(vector<Point> initialPoints, float neighborhoodRadius);        
-        vector<Point> findClosestOnX(vector<Point> points, Point pivot);
+        vector<Point> findClosestOnX(vector<Point> points, Point pivot);        
         bool isFinger(Point a, Point b, Point c, double minAngle, double maxAngle, Point handCentroid, double minDistFromCentroid);
         bool isHand(vector<Point> contour, Rect boundRect);
         int findLargestCont(vector<vector<Point>> contours);
