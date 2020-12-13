@@ -76,6 +76,8 @@ extern "C" int __declspec(dllexport) __stdcall openCam(int& outCameraWidth, int&
         return -1;
     }
 
+    BMC.calibrated = false;
+
     handCenter = Point(0, 0);
     furthestFingertip = Point(0, 0);
 
@@ -120,7 +122,7 @@ extern "C" void __declspec(dllexport) __stdcall capture() {
 }
 
 // provides webcam feed with overlay of region of interest for getting the binary mask, can be called periodically in Update()
-extern "C" void __declspec(dllexport) __stdcall showOverlayFeed() {
+extern "C" void __declspec(dllexport) __stdcall showOverlayFeed(bool removeBackground = false, float backgroundRemoveOffset = 15) {
     Mat frame;
     cap >> frame;
 
@@ -128,10 +130,19 @@ extern "C" void __declspec(dllexport) __stdcall showOverlayFeed() {
         return;
     }
 
+    if (!BMC.calibrated)
+    {
+        BMC.calibrateBackground(frame);
+    }
+
     I1 = frame;
 
+    if (removeBackground && BMC.calibrated)
+    {
+        I1 = BMC.removeBackGround(I1, backgroundRemoveOffset);
+    }
     // create bgr and hsv version of image
-    frame.convertTo(I_BGR, CV_32F, 1.0 / 255.0, 0.);
+    I1.convertTo(I_BGR, CV_32F, 1.0 / 255.0, 0.);
     cvtColor(I_BGR, I_HSV, COLOR_BGR2HSV);
     overlay = BMC.createMaskOverlay(I_BGR, I_HSV);
 
@@ -158,7 +169,7 @@ extern "C" void __declspec(dllexport) __stdcall showBinaryFeed(HSVRange hsv_rang
 
 // provides webcam feed with hand contour overlay. should be called after correct binary mask has been established, can be called periodically in Update()
 // IMPORTANT: either call this function or showOverlayFeed() but not both at the same time (since they update the same window)
-extern "C" void __declspec(dllexport) __stdcall drawHandContour() {
+extern "C" void __declspec(dllexport) __stdcall drawHandContour(bool removeBackground = false, float backgroundRemoveOffset = 15) {
     Mat frame;
     cap >> frame;
 
@@ -166,11 +177,20 @@ extern "C" void __declspec(dllexport) __stdcall drawHandContour() {
         handCenter = Point(0, 0);
     }
 
+    if (!BMC.calibrated)
+    {
+        BMC.calibrateBackground(frame);
+    }
+
     I1 = frame;
 
+    if (removeBackground && BMC.calibrated)
+    {           
+        I1 = BMC.removeBackGround(I1, backgroundRemoveOffset);        
+    }
     // create bgr and hsv version of image
-    frame.convertTo(I_BGR, CV_32F, 1.0 / 255.0, 0.);
-    cvtColor(I_BGR, I_HSV, COLOR_BGR2HSV);
+    I1.convertTo(I_BGR, CV_32F, 1.0 / 255.0, 0.);
+    cvtColor(I_BGR, I_HSV, COLOR_BGR2HSV);    
 
     GD.getHandContour(mask_nf, handContour);
     if (!handContour.empty()) {
@@ -184,7 +204,7 @@ extern "C" void __declspec(dllexport) __stdcall drawHandContour() {
     imshow("feed", I_BGR);
 }
 
-extern "C" void __declspec(dllexport) __stdcall drawIndex() {
+extern "C" void __declspec(dllexport) __stdcall drawIndex(bool removeBackground = false, float backgroundRemoveOffset = 15) {
     Mat frame;
     cap >> frame;
 
@@ -193,16 +213,26 @@ extern "C" void __declspec(dllexport) __stdcall drawIndex() {
         furthestFingertip = Point(0, 0);
     }
 
+    if (!BMC.calibrated)
+    {
+        BMC.calibrateBackground(frame);
+    }
+
     I1 = frame;
 
+    if (removeBackground && BMC.calibrated)
+    {
+        I1 = BMC.removeBackGround(I1, backgroundRemoveOffset);
+    }
     // create bgr and hsv version of image
-    frame.convertTo(I_BGR, CV_32F, 1.0 / 255.0, 0.);
+    I1.convertTo(I_BGR, CV_32F, 1.0 / 255.0, 0.);
     cvtColor(I_BGR, I_HSV, COLOR_BGR2HSV);
     
     GD.getHandContour(mask_nf, handContour);
     if (!handContour.empty()) {
         handCenter = GD.drawHull(handContour, I_BGR, hull, hull_int, defects, boundingRectangle);        
         furthestFingertip = GD.getFurthestFingertip(handContour, I_BGR, defects, boundingRectangle);        
+        fingerTips = GD.findFingerTips(handContour, I_BGR, defects, boundingRectangle);        
         vector<Point> furthestFinger{ furthestFingertip };        
         GD.drawFingerTips(furthestFinger, I_BGR);        
     }
